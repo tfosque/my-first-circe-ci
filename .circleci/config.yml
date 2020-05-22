@@ -1,20 +1,26 @@
-version: 2.1
-
-orbs:
- percy: percy/agent@0.1.2
-
+version: 2
 jobs:
- run_tests:
-   parallelism: 3
-   steps:
-     - attach_workspace:
-         at: .
-     - run: echo "your tests run here"
+  build:
+    docker:
+      - image: circleci/node:6-browsers
 
-workflows:
- test:
-   jobs:
-     - run_tests
-     - percy/finalize_all:
-         requires:
-           - run_tests
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run: node install
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+      - run: node ng build --prod --build-optimizer --no-progress
+      - run: node ng test --single-run --no-progress

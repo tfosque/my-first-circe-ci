@@ -2,25 +2,19 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/yarn:6-browsers
-
-    working_directory: ~/repo
-
+      - image: circleci/<language>:<version TAG>
     steps:
       - checkout
-
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
-
-      - run: yarn install
-
-      - save_cache:
-          paths:
-            - yarn_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
-
-      - run: yarn ng build --prod --build-optimizer --no-progress
-      - run: yarn ng test --single-run --no-progress
+      - run: bundle install /build
+  test:
+    docker:
+      - image: circleci/<language>:<version TAG>
+    steps:
+      - checkout
+      - run:  bundle install /build
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - test
